@@ -1,0 +1,8 @@
+<jboss-deployment-structure>
+    <deployment>
+        <exclusions>
+            <module name="org.apache.log4j" />
+            <module name="org.apache.commons.logging" />
+        </exclusions>
+    </deployment>
+</jboss-deployment-structure>

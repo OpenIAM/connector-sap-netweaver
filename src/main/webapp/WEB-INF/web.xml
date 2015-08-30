@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+         http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+	<servlet>
+		<description>SAPUMEConnector</description>
+		<servlet-name>SAPUMEConnector</servlet-name>
+		<servlet-class>org.openiam.connector.sapume.service.SAPUMEConnectorServiceImpl</servlet-class>
+		<!-- <load-on-startup>1</load-on-startup> -->
+	</servlet>
+
+	<servlet>
+		<servlet-name>ServletInit</servlet-name>
+		<servlet-class>org.openiam.connector.sapume.init.ServletInit</servlet-class>
+		<init-param>
+			<param-name>ConfigFile</param-name>
+			<param-value>D:/EclipseKeplerMaven/workspace/SAPUMEConnector/config/SAPUMEConnectorService.properties</param-value>
+		</init-param>
+		<load-on-startup>2</load-on-startup>
+	</servlet>
+	
+	<servlet-mapping>
+		<servlet-name>SAPUMEConnector</servlet-name>
+		<url-pattern>/SAPUMEConnectorService</url-pattern>
+	</servlet-mapping>
+
+	<!-- <session-config> <session-timeout>60</session-timeout> </session-config> -->
+</web-app>
