@@ -11,3 +11,7 @@ config -- > Sample SAPUME\SAP -NetWeaver Connector configuration
 
 SAPUMEConnector.docx --> Documentation.
 
+SAPUMEConnector.war --> War connector ready to deploy
+
+connector_sapep.sql --> SQL file to load Attributte policy in OpenIAM
+
