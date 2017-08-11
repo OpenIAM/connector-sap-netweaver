@@ -95,7 +95,7 @@ public class LookupUserSAPUMEOperation extends AbstractSAPUMEOperation
 			for (int i = 0; i < attrs.size(); i++)
 			{
 				String attribute = attrs.get(i);
-				if (attribute.equals(SAPUMEConstants.SAPUME_FIELD_PASSWORD)) // TODO: || attribute.equals(SAPConstants.SAP_FIELD_OLD_IDENTITY))
+				if (attribute.equals(SAPUMEConstants.SAPUME_FIELD_PASSWORD))
 					attrs.remove(i);
 			}
 		}

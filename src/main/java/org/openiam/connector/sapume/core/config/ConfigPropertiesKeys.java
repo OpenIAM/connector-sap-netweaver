@@ -12,7 +12,8 @@ public interface ConfigPropertiesKeys
 	public static final String CONFIG_KEY_SAPUME_ENABLEACCOUNTS_DATE = "sapume.general.enableAccountsDate";
 	public static final String CONFIG_KEY_SAPUME_TRACESPMLREQUEST = "sapume.general.traceSpmlRequest";
 	public static final String CONFIG_KEY_SAPUME_POLICYMAP_ATTS = "sapume.general.policyMapAtts";
-		
+	public static final String CONFIG_KEY_SAPUME_MANAGEDSYS_ATTS = "sapume.general.managedSysAtts";
+	public static final String CONFIG_KEY_SAPUME_MODIFYDATES_FOR_ENABLEDISABLE = "sapume.general.modifyDatesForEnableDisable";
 	public static final String CONFIG_KEY_SAPUME_RECON_SEARCH_USERS_ATTS = "sapume.recon.search.users.atts";
 	
 }

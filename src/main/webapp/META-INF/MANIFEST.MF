@@ -1,11 +1,11 @@
-Manifest-Version: 1.0
+Manifest-Version: 1.4
 Specification-Title: SAPUMEConnector
 Built-By: Sistemas Informáticos Abiertos, S.A. (SIA)
 Created-By: Apache Maven 3.0.4
 Archiver-Version: Plexus Archiver
 Build-Jdk: 1.7.0_71
 Implementation-Title: SAPUMEConnector
-Specification-Version: 1.0.0
+Specification-Version: 1.4.0
 Specification-Vendor: SAPUMEConnector
-Implementation-Version: 1.0.0
+Implementation-Version: 1.4.0
 Implementation-Vendor: Sistemas Informáticos Abiertos, S.A. (SIA)

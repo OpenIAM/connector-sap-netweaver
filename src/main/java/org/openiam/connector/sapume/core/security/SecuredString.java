@@ -98,7 +98,8 @@ public class SecuredString
 	{
 		char[] result = new char[bytes.length/2];
 		for (int i=0; i < result.length; i++) {
-			result[i] = (char) ((bytes[i*2] << 8) + bytes[i*2+1]);
+			//result[i] = (char) ((bytes[i*2] << 8) + bytes[i*2+1]);
+			result[i] = (char) ((bytes[i*2] << 8 ) + bytes[i*2+1] & 0xFF);
 		}
 		return result;
 	}

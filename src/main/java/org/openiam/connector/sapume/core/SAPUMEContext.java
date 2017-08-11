@@ -8,6 +8,7 @@ import org.openiam.connector.sapume.core.beans.ProvisionSAPUMEUserBean;
 import org.openiam.connector.sapume.core.beans.SAPUMEGroupBean;
 import org.openiam.connector.sapume.core.beans.SAPUMERoleBean;
 import org.openiam.connector.sapume.core.beans.SAPUMESystemBean;
+import org.openiam.connector.sapume.core.common.ExecutionModeTypes;
 import org.openiam.connector.sapume.core.common.SAPUMEConfiguration;
 import org.openiam.connector.sapume.core.common.SAPUMEConnectorException;
 import org.openiam.connector.sapume.core.common.SAPUMEUtil;
@@ -259,13 +260,13 @@ public class SAPUMEContext
 	}
 	
 	
-	public List<ExtensibleAttribute> lookupAttributeNames() throws SAPUMEConnectorException
+	public List<ExtensibleAttribute> lookupAttributeNames(ExecutionModeTypes executionMode) throws SAPUMEConnectorException
 	{
 		try
 		{
 			logger.info("Start lookupAttributeNames() method");
 			
-			List<ExtensibleAttribute> extensibleAttributeList = SAPUMEUtil.lookupAttributeNames(this.sapumeConfiguration);
+			List<ExtensibleAttribute> extensibleAttributeList = SAPUMEUtil.lookupAttributeNames(this.sapumeConfiguration, executionMode);
 			logger.info("Attribute names obtained from SAP");
 			return extensibleAttributeList;
 			

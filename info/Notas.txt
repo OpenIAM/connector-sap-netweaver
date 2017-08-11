@@ -1,0 +1,42 @@
+1. Se ha creado el proyecto a partir del POM
+2. Se adapta el WSDL indicando los nombres correctos para SAP
+3. Descomentando el pom.xml la parte del plugin "cxf-codegen-plugin" se genera los artefactos java correspondientes a la definciión del wsdl
+4. Se reorganizan las clases
+	- wraped
+	- obsolete
+	- types
+5. Se cogen las clases SAPConnectorService.java y SAPConnectorServiceImpl.java y se sacan del wraped
+6. En la interfaz SAPConnectorService.java, se ordenan los métodos y se indican los paquetes correctos (org.openiam.connector.sap.service.wrapper.)
+	en las anotaciones @RequestWrapper y @ResponseWrapper de cada método
+7. En la implementación SAPConnectorServiceImpl.java, se ordenan los métodos y se indica la correcta paqueteria
+   de la interfaz en el parámetro "endpointInterface" del @WebService 
+8. Se implementa cada método
+9. Se despliga en el JBOSS 7.1.1
+
+
+QUE HACEMOS CON LA CLASE ExtensibleAttribute.java?
+	--> Se sustituye el contenido de la clase org.openiam.connector.sap.service.types.ExtensibleAttribute por la del proyecto del conector de Notes.
+
+
+Utilizamos Log4j para las trazas
+	-> Inclusión de log4j.properties en SAPUMEConnector.war\WEB-INF\classes
+	-> Inclusión de jboss-deployment-structure.xml en SAPUMEConnector.war\META-INF
+	
+	
+En la clase org.openiam.connector.sapume.service.wrapper.LookupAttributeResponse
+añadir el método setAttributes:
+
+	public void setAttributes(List<ExtensibleAttribute> attributes) {
+	        this.attributes = attributes;
+	    }
+	    
+para poderlos asignar en la operación lookupAttributeNames del conector
+
+
+>Generar el WAR con Maven
+	- Run As > Maven Clean
+	- Maven > Update Project
+	- Run As > Maven build > Goals install - Check Skip Tests
+
+	--> En el WAR generado hay que actualizar el MANIFEST.MF
+	

@@ -69,10 +69,8 @@ public class CreateUserSAPUMEOperation extends AbstractSAPUMEOperation
 							String attName = attribute.getAttName();
 							logger.debug("Start process for attribute " + attName);
 
-							/* TODO
-								// Estos campos en teoría no llegan nunca hasta aquí, ya que son procesados, tratados y eliminados por la clase org.openiam.connector.sapume.request.RequestReader
-								if (!attName.equals(SAPConstants.SAP_FIELD_OLD_IDENTITY))
-							*/
+
+							// Estos campos en teoría no llegan nunca hasta aquí, ya que son procesados, tratados y eliminados por la clase org.openiam.connector.sapume.request.RequestReader
 							if (!attName.equals(SAPUMEConstants.SAPUME_FIELD_ASSIGNEDGROUPS) && !attName.equals(SAPUMEConstants.SAPUME_FIELD_ASSIGNEDROLES))
 							{
 								if (attName.equals(SAPUMEConstants.SAPUME_FIELD_VALIDTO) || attName.equals(SAPUMEConstants.SAPUME_FIELD_VALIDFROM))
@@ -101,6 +99,8 @@ public class CreateUserSAPUMEOperation extends AbstractSAPUMEOperation
 
 									attSpml.setName(attName);
 
+									// La operación de creación de un usuario es considerada como una operación administrativa, por eso aqui no hace falta consultar
+									// el flag isAdministrativePwdChange como se hace en la clase ModifyUserSAPUMEOperation
 									if (!this.sapConfiguration.isChangePasswordAtNextLogon())
 									{
 										// La contraseña establecida para el usuario se guarda y se le asignará tras la creación
@@ -189,6 +189,8 @@ public class CreateUserSAPUMEOperation extends AbstractSAPUMEOperation
 						boolean deleteUser = false;
 						try
 						{
+							// La operación de creación de un usuario es considerada como una operación administrativa, por eso aqui no hace falta consultar
+							// el flag isAdministrativePwdChange como se hace en la clase ModifyUserSAPUMEOperation
 							if (changePwdFlag && !this.sapConfiguration.isChangePasswordAtNextLogon())
 							{
 								// Hacemos un cambio de contraseña. Si tenemos el isChangePasswordAtNextLogon desctivado, el usuario habra sido creado
@@ -201,9 +203,15 @@ public class CreateUserSAPUMEOperation extends AbstractSAPUMEOperation
 								logger.debug("Password manage is NOT required");
 							}
 
-							logger.info("Membership relations for user will be managed");
-							SAPUMEUtil.manageMembershipForUser(sapumeUniqueID, provisioningUser, this.sapConnection, this.sapConfiguration);
-							logger.info("Membership relations was managed successfully for user");
+							if(provisioningUser.isFlagMngGroups() || provisioningUser.isFlagMngRoles())
+							{
+								logger.info("Membership relations for user will be managed");
+								SAPUMEUtil.manageMembershipForUser(sapumeUniqueID, provisioningUser, this.sapConnection, this.sapConfiguration);
+								logger.info("Membership relations was managed successfully for user");
+								
+							} else {
+								logger.info("Membership relations is not required to manage for this user");
+							}
 							
 						} catch (SAPUMEConnectorException e) {
 							logger.error("SAPUMEConnectorException handled in CreateUserSAPUMEOperation.execute() method after user creation: " + e.getMessage());
