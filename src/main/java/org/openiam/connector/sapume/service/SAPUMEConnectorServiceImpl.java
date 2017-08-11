@@ -10,6 +10,8 @@ import org.openiam.connector.sapume.core.beans.ProvisionSAPUMEUserBean;
 import org.openiam.connector.sapume.core.beans.SAPUMEGroupBean;
 import org.openiam.connector.sapume.core.beans.SAPUMERoleBean;
 import org.openiam.connector.sapume.core.beans.SAPUMESystemBean;
+import org.openiam.connector.sapume.core.common.ChangePasswordTypes;
+import org.openiam.connector.sapume.core.common.ExecutionModeTypes;
 import org.openiam.connector.sapume.core.common.SAPUMEConnectorException;
 import org.openiam.connector.sapume.core.common.SAPUMEGroupTypes;
 import org.openiam.connector.sapume.request.AttributeReader;
@@ -57,6 +59,9 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
     private RequestReader<BaseRequestType> requestReader;
 	private SAPUMEContext sapumeCtx;
 	private String userID;
+	
+	// Lock MultiThreading
+	private static Object lock = new Object();
 
 	/*************************************************************
      ***********           MÉTODOS PÚBLICOS            *********** 
@@ -66,48 +71,51 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      * @see org.openiam.connector.sapume.service.SAPUMEConnectorService#add(org.openiam.connector.sapume.service.wrapper.CrudRequest  reqType )*
      */
     public ObjectResponse add(CrudRequest request)
-    { 
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START add() operation ---------------");
-    		 
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
+    {
+    	synchronized (lock)
+		{
+    		ObjectResponse response = new ObjectResponse();
+            try
+            {
+            	logger.info("--------------- START add() operation ---------------");
+        		 
+        		logger.info("RequestID: " + request.getRequestID());
+            	response.setRequestID(request.getRequestID());
 
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-    		
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean newProvSapUmeUser = requestReader.createProvisionUserForAddOperation(this.sapumeCtx);
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + newProvSapUmeUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-    			logger.debug("ProvisionSAPUMEUserBean information: " + newProvSapUmeUser.getBeanInPrintedFormat());
-    		}
+            	logger.info("Initialize class objects...");
+        		initialize(request);
+        		logger.info("UserID of the current operated identity: " + this.userID);
+        		
+        		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+        		ProvisionSAPUMEUserBean newProvSapUmeUser = requestReader.createProvisionUserForAddOperation(this.sapumeCtx);
+        		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + newProvSapUmeUser.getUserID());
+        		if (logger.isDebugEnabled())
+        		{
+        			logger.debug("ProvisionSAPUMEUserBean information: " + newProvSapUmeUser.getBeanInPrintedFormat());
+        		}
 
-    		logger.info("SAPUMEContext operation will be invoked: createUser()");
-    		this.sapumeCtx.createUser(newProvSapUmeUser);
-    		logger.info("Succeeded user creation in SAPUME for " + this.userID);
-    		
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of add() method");
-    		
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "add");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "add");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END add() operation ---------------");
-    	}
-    	return response;
+        		logger.info("SAPUMEContext operation will be invoked: createUser()");
+        		this.sapumeCtx.createUser(newProvSapUmeUser);
+        		logger.info("Succeeded user creation in SAPUME for " + this.userID);
+        		
+            	logger.info("Define a SUCCESS Response Status");
+        		response.setStatus(StatusCodeType.SUCCESS);
+        		
+        		logger.info("Succeeded execution of add() method");
+        		
+            } catch (SAPUMEConnectorException e) {
+        		this.handleException(response, e, "add");
+        		
+        	} catch (Exception e) {
+        		this.handleException(response, e, "add");
+        		
+        	} finally {
+        		this.sapumeCtx.dispose();
+        		logger.info("Response Status: " + response.getStatus());
+        		logger.info("--------------- END add() operation ---------------");
+        	}
+        	return response;	
+		}
     }
     
     
@@ -116,47 +124,50 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public ObjectResponse modify(CrudRequest request)
     { 
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START modify() operation ---------------");
-    		 
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
+    	synchronized (lock)
+		{
+    		ObjectResponse response = new ObjectResponse();
+            try
+            {
+            	logger.info("--------------- START modify() operation ---------------");
+        		 
+        		logger.info("RequestID: " + request.getRequestID());
+            	response.setRequestID(request.getRequestID());
 
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-    		
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean provSapUser = requestReader.createProvisionUserForModifyOperation(this.sapumeCtx);
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-    			logger.debug("ProvisionSAPUMEUserBean information: " + provSapUser.getBeanInPrintedFormat());
-    		}
-    		
-    		logger.info("SAPUMEContext operation will be invoked: modifyUser()");
-    		this.sapumeCtx.modifyUser(provSapUser);
-    		logger.info("Succeeded user modification in SAPUME for " + this.userID);        	
-        	        	
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of modify() method");
-    		
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "modify");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "modify");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END modify() operation ---------------");
-    	}
-    	return response;
+            	logger.info("Initialize class objects...");
+        		initialize(request);
+        		logger.info("UserID of the current operated identity: " + this.userID);
+        		
+        		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+        		ProvisionSAPUMEUserBean provSapUser = requestReader.createProvisionUserForModifyOperation(this.sapumeCtx);
+        		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUser.getUserID());
+        		if (logger.isDebugEnabled())
+        		{
+        			logger.debug("ProvisionSAPUMEUserBean information: " + provSapUser.getBeanInPrintedFormat());
+        		}
+        		
+        		logger.info("SAPUMEContext operation will be invoked: modifyUser()");
+        		this.sapumeCtx.modifyUser(provSapUser);
+        		logger.info("Succeeded user modification in SAPUME for " + this.userID);        	
+            	        	
+            	logger.info("Define a SUCCESS Response Status");
+        		response.setStatus(StatusCodeType.SUCCESS);
+        		
+        		logger.info("Succeeded execution of modify() method");
+        		
+            } catch (SAPUMEConnectorException e) {
+        		this.handleException(response, e, "modify");
+        		
+        	} catch (Exception e) {
+        		this.handleException(response, e, "modify");
+        		
+        	} finally {
+        		this.sapumeCtx.dispose();
+        		logger.info("Response Status: " + response.getStatus());
+        		logger.info("--------------- END modify() operation ---------------");
+        	}
+        	return response;
+		}
     }
 			
 	
@@ -164,48 +175,51 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      * @see org.openiam.connector.sapume.service.SAPUMEConnectorService#suspend(org.openiam.connector.sapume.service.wrapper.SuspendResumeRequest  request )*
      */
     public BaseResponseType suspend(SuspendResumeRequest request)
-    { 
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START suspend() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-        	
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForSuspendOperation();
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
-    		}
-    		
-    		logger.info("SAPUMEContext operation will be invoked: disableUser()");
-    		this.sapumeCtx.disableUser(provSapUmeUser);
-    		logger.info("User " + this.userID + " was disabled successfully in SAPUME");
-        	
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of suspend() method");
-
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "suspend");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "suspend");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END suspend() operation ---------------");
-    	}
-    	return response;
+    {
+    	synchronized (lock)
+		{
+	    	ObjectResponse response = new ObjectResponse();
+	        try
+	        {
+	        	logger.info("--------------- START suspend() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		logger.info("UserID of the current operated identity: " + this.userID);
+	        	
+	    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+	    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForSuspendOperation();
+	    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
+	    		if (logger.isDebugEnabled())
+	    		{
+	        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
+	    		}
+	    		
+	    		logger.info("SAPUMEContext operation will be invoked: disableUser()");
+	    		this.sapumeCtx.disableUser(provSapUmeUser);
+	    		logger.info("User " + this.userID + " was disabled successfully in SAPUME");
+	        	
+	        	logger.info("Define a SUCCESS Response Status");
+	    		response.setStatus(StatusCodeType.SUCCESS);
+	    		
+	    		logger.info("Succeeded execution of suspend() method");
+	
+	        } catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "suspend");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "suspend");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END suspend() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
 
     
@@ -214,47 +228,50 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public BaseResponseType resume(SuspendResumeRequest request)
     {
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START resume() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-        	
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForResumeOperation();
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
-    		}
-    		
-    		logger.info("SAPUMEContext operation will be invoked: enableUser()");
-    		this.sapumeCtx.enableUser(provSapUmeUser);
-    		logger.info("User " + this.userID + " was enabled successfully in SAPUME");
-        	
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of resume() method");
-
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "resume");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "resume");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END resume() operation ---------------");
-    	}
-    	return response;
+    	synchronized (lock)
+		{
+	    	ObjectResponse response = new ObjectResponse();
+	        try
+	        {
+	        	logger.info("--------------- START resume() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		logger.info("UserID of the current operated identity: " + this.userID);
+	        	
+	    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+	    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForResumeOperation();
+	    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
+	    		if (logger.isDebugEnabled())
+	    		{
+	        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
+	    		}
+	    		
+	    		logger.info("SAPUMEContext operation will be invoked: enableUser()");
+	    		this.sapumeCtx.enableUser(provSapUmeUser);
+	    		logger.info("User " + this.userID + " was enabled successfully in SAPUME");
+	        	
+	        	logger.info("Define a SUCCESS Response Status");
+	    		response.setStatus(StatusCodeType.SUCCESS);
+	    		
+	    		logger.info("Succeeded execution of resume() method");
+	
+	        } catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "resume");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "resume");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END resume() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
 
     
@@ -263,47 +280,50 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public ObjectResponse delete(CrudRequest request)
     {
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START delete() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-        	
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForDeleteOperation();
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
-    		}
-    		
-    		logger.info("SAPUMEContext operation will be invoked: deleteUser()");
-    		this.sapumeCtx.deleteUser(provSapUmeUser);
-    		logger.info("User " + this.userID + " was deleted successfully in SAPUME");
-        	
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of delete() method");
-
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "delete");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "delete");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END delete() operation ---------------");
-    	}
-    	return response;
+    	synchronized (lock)
+		{
+	    	ObjectResponse response = new ObjectResponse();
+	        try
+	        {
+	        	logger.info("--------------- START delete() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		logger.info("UserID of the current operated identity: " + this.userID);
+	        	
+	    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+	    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForDeleteOperation();
+	    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
+	    		if (logger.isDebugEnabled())
+	    		{
+	        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
+	    		}
+	    		
+	    		logger.info("SAPUMEContext operation will be invoked: deleteUser()");
+	    		this.sapumeCtx.deleteUser(provSapUmeUser);
+	    		logger.info("User " + this.userID + " was deleted successfully in SAPUME");
+	        	
+	        	logger.info("Define a SUCCESS Response Status");
+	    		response.setStatus(StatusCodeType.SUCCESS);
+	    		
+	    		logger.info("Succeeded execution of delete() method");
+	
+	        } catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "delete");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "delete");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END delete() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
     
     
@@ -312,47 +332,57 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public BaseResponseType resetPassword(PasswordRequest request)
     {
-    	ObjectResponse response = new ObjectResponse();
-        try
-        {
-        	logger.info("--------------- START resetPassword() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		logger.info("UserID of the current operated identity: " + this.userID);
-        	
-    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
-    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForResetPasswordOperation();
-    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
-    		if (logger.isDebugEnabled())
-    		{
-        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
-    		}
-    		
-    		logger.info("SAPUMEContext operation will be invoked: resetPassword()");
-    		this.sapumeCtx.resetPassword(provSapUmeUser);
-    		logger.info("Password was reset successfully in SAPUME for user " + this.userID);
-        	
-        	logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of resetPassword() method");
-
-        } catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "resetPassword");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "resetPassword");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END resetPassword() operation ---------------");
-    	}
-    	return response;
+    	synchronized (lock)
+		{
+	    	ObjectResponse response = new ObjectResponse();
+	        try
+	        {
+	        	logger.info("--------------- START resetPassword() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		logger.info("UserID of the current operated identity: " + this.userID);
+	
+	    		// Identificamos la operación que provoca la ejecución de la llamada al conector (SET_PASSWORD o RESET_PASSWORD)
+	    		// para saber si es un cambio de contraseña administrativo o no 
+	    		String strOperation = request.getOperation();
+	        	logger.info("Request Operation: " + strOperation);
+	        	ChangePasswordTypes changePwdType = ChangePasswordTypes.getChangePasswordTypeFromString(strOperation);
+	        	logger.info("ChangePasswordTypes enum value obtained: " + changePwdType.toString());
+	        	
+	    		logger.info("ProvisionSAPUMEUserBean will be obtained from request information...");
+	    		ProvisionSAPUMEUserBean provSapUmeUser = requestReader.createProvisionUserForResetPasswordOperation(changePwdType);
+	    		logger.info("ProvisionSAPUMEUserBean obtained. UserID: " + provSapUmeUser.getUserID());
+	    		if (logger.isDebugEnabled())
+	    		{
+	        		logger.debug("ProvisionSAPUMEUserBean information: " + provSapUmeUser.getBeanInPrintedFormat());
+	    		}
+	
+	    		logger.info("SAPUMEContext operation will be invoked: resetPassword()");
+	    		this.sapumeCtx.resetPassword(provSapUmeUser);
+	    		logger.info("Password was reset successfully in SAPUME for user " + this.userID);
+	        	
+	        	logger.info("Define a SUCCESS Response Status");
+	    		response.setStatus(StatusCodeType.SUCCESS);
+	    		
+	    		logger.info("Succeeded execution of resetPassword() method");
+	
+	        } catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "resetPassword");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "resetPassword");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END resetPassword() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
     
         
@@ -398,150 +428,208 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public SearchResponse2 lookup(LookupRequest request)
     {
-    	SearchResponse2 response = new SearchResponse2();
-    	try
-    	{
-    		logger.info("--------------- START lookup() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		    		
-    		ProvisionObjectType provObjType = request.getExtensibleObject().getExtensibleObjectType();
-    		logger.info("ProvisionObjectType: " + provObjType);
-    		
-    		if(ProvisionObjectType.USER == provObjType)
-    		{
-    			String identity = request.getSearchValue();
-        		logger.info("UserID of the user being looked up is: " + identity);
-        		
-        		if (logger.isDebugEnabled())
-        		{
-        			if (this.attributeReader.keys() != null && this.attributeReader.keys().size() > 0)
-        			{
-        				StringBuffer sb = new StringBuffer();
-        				sb.append("Attributes to loked up: ");
-        				for (String oneAtt : this.attributeReader.keys())
-        				{
-							sb.append(oneAtt);
-							sb.append(",");
-						}
-        				String strAtts = sb.toString();
-        				strAtts = strAtts.endsWith(",") ? strAtts.substring(0, (strAtts.length() - 1)) : strAtts;
-        				logger.debug(strAtts);
-        				
-        			} else {
-        				logger.debug("Attribute list received is null or empty");
-        			}
-        		}
-        		
-        		logger.info("SAPContext operation will be invoked: lookupUser()");
-        		ProvisionSAPUMEUserBean provSapUser = this.sapumeCtx.lookupUser(identity, this.attributeReader.keys());
-        		if (provSapUser != null)
-        		{
-        			logger.info("Succeeded user lookup in SAPUME for " + this.userID);
-            		logger.info("ProvisionSAPUserBean obtained. UserID: " + provSapUser.getUserID());
-            		if (logger.isDebugEnabled())
-            		{
-                		logger.debug("ProvisionSAPUserBean information: " + provSapUser.getBeanInPrintedFormat());
-            		}
-            		
-            		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-            		logger.info("LookupResponseWriter obtained. User will be added in response object...");
-        			responseWriter.writeUser(provSapUser);
-        			logger.info("User was written in response");
-        			
-            		logger.info("Define a SUCCESS Response Status");
-            		response.setStatus(StatusCodeType.SUCCESS);
-            		
-            		logger.info("Succeeded execution of lookup() method");
-            		
-        		} else {
-        			String msgError = "User " + identity + " not found in SAPUME repository";
-        			this.handleError(response, msgError);
-        		}
-        		
-    		} else if(ProvisionObjectType.GROUP == provObjType) {
-    			
-    			String identity = request.getSearchValue();
-        		logger.info("ID of the group being looked up is: " + identity);
-
-// TODO TODO TODO: falta por determinar cómo se si es Group o Role (por el nombre, ver si me llega el clasification 
-//	con el que se define la entidad en OpenIAM, etc......) 
-        		
-        		if (identity.startsWith("GROUP"))
-        		{
-        			logger.info("SAPContext operation will be invoked: lookupGroup()");
-        			SAPUMEGroupBean groupBean = this.sapumeCtx.lookupGroup(identity);
-            		if (groupBean != null)
-            		{
-            			logger.info("Succeeded Group lookup in SAPUME for " + identity);
-                		logger.debug("SAPUMEGroupBean information: " + groupBean.getBeanInPrintedFormat());
-                		
-                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-                		logger.info("LookupResponseWriter obtained. Group will be added in response object...");
-            			responseWriter.writeGroup(groupBean);
-            			logger.info("Group was written in response");
-            			
-                		logger.info("Define a SUCCESS Response Status");
-                		response.setStatus(StatusCodeType.SUCCESS);
-                		
-                		logger.info("Succeeded execution of lookup() method");
-                		
-            		} else {
-            			String msgError = "Group " + identity + " not found in SAPUME repository";
-            			this.handleError(response, msgError);
-            		}
-            		
-        		} else if (identity.startsWith("ROLE")) {
-        			
-        			logger.info("SAPContext operation will be invoked: lookupRole()");
-        			SAPUMERoleBean roleBean = this.sapumeCtx.lookupRole(identity);
-            		if (roleBean != null)
-            		{
-            			logger.info("Succeeded Role lookup in SAPUME for " + identity);
-                		logger.debug("SAPUMERoleBean information: " + roleBean.getBeanInPrintedFormat());
-                		
-                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-                		logger.info("LookupResponseWriter obtained. Role will be added in response object...");
-            			responseWriter.writeRole(roleBean);
-            			logger.info("Role was written in response");
-            			
-                		logger.info("Define a SUCCESS Response Status");
-                		response.setStatus(StatusCodeType.SUCCESS);
-                		
-                		logger.info("Succeeded execution of lookup() method");
-                		
-            		} else {
-            			String msgError = "Group " + identity + " not found in SAPUME repository";
-            			this.handleError(response, msgError);
-            		}
-        			        			
-        		} else {
-        			logger.error("Cannot define Group type from name received");
-        			throw new SAPUMEConnectorException("Cannot define Group type from name received");
-        		}
-        		        		
-    		} else {
-    			logger.error("ProvisionObjectType (" + provObjType + ") not supported");
-    			throw new SAPUMEConnectorException("ProvisionObjectType (" + provObjType + ") not supported");
-    		}
-    		
-    	} catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "lookup");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "lookup");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END lookup() operation ---------------");
-    	}
-    	
-    	return response;
+    	synchronized (lock)
+		{
+	    	SearchResponse2 response = new SearchResponse2();
+	    	try
+	    	{
+	    		logger.info("--------------- START lookup() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		
+	    		ProvisionObjectType provObjType = request.getExtensibleObject().getExtensibleObjectType();
+	    		logger.info("ProvisionObjectType: " + provObjType);
+	    		    		
+	    		if(ProvisionObjectType.USER == provObjType)
+	    		{
+	    			String identity = request.getSearchValue();
+	        		logger.info("UserID of the user being looked up is: " + identity);
+	        		
+	        		if (logger.isDebugEnabled())
+	        		{
+	        			if (this.attributeReader.keys() != null && this.attributeReader.keys().size() > 0)
+	        			{
+	        				StringBuffer sb = new StringBuffer();
+	        				sb.append("Attributes to loked up: ");
+	        				for (String oneAtt : this.attributeReader.keys())
+	        				{
+								sb.append(oneAtt);
+								sb.append(",");
+							}
+	        				String strAtts = sb.toString();
+	        				strAtts = strAtts.endsWith(",") ? strAtts.substring(0, (strAtts.length() - 1)) : strAtts;
+	        				logger.debug(strAtts);
+	        				
+	        			} else {
+	        				logger.debug("Attribute list received is null or empty");
+	        			}
+	        		}
+	        		
+	        		logger.info("SAPUMEContext operation will be invoked: lookupUser()");
+	        		ProvisionSAPUMEUserBean provSapUser = this.sapumeCtx.lookupUser(identity, this.attributeReader.keys());
+	        		if (provSapUser != null)
+	        		{
+	        			logger.info("Succeeded user lookup in SAPUME for " + this.userID);
+	            		logger.info("ProvisionSAPUserBean obtained. UserID: " + provSapUser.getUserID());
+	            		if (logger.isDebugEnabled())
+	            		{
+	                		logger.debug("ProvisionSAPUserBean information: " + provSapUser.getBeanInPrintedFormat());
+	            		}
+	            		
+	            		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	            		logger.info("LookupResponseWriter obtained. User will be added in response object...");
+	        			responseWriter.writeUser(provSapUser);
+	        			logger.info("User was written in response");
+	        			
+	            		logger.info("Define a SUCCESS Response Status");
+	            		response.setStatus(StatusCodeType.SUCCESS);
+	            		
+	            		logger.info("Succeeded execution of lookup() method");
+	            		
+	        		} else {
+	        			String msgError = "User " + identity + " not found in SAPUME repository";
+	        			this.handleError(response, msgError);
+	        		}
+	        		
+	    		} else if(ProvisionObjectType.GROUP == provObjType) {
+	    			
+	    			String identity = request.getSearchValue();
+	        		logger.info("ID of the group being looked up is: " + identity);
+	        		
+	        		// Determinamos si es GROUP o ROLE a partir de la Request
+	        		SAPUMEGroupTypes sapumeGroupType = SAPUMEGroupTypes.getGroupTypesFromRequest(request);
+	        		if (sapumeGroupType != null && sapumeGroupType.equals(SAPUMEGroupTypes.GROUP))
+	        		{
+	        			logger.info("Entity target is a Group");
+	    				logger.info("SAPUMEContext operation will be invoked: lookupGroup()");
+	        			SAPUMEGroupBean groupBean = this.sapumeCtx.lookupGroup(identity);
+	            		if (groupBean != null)
+	            		{
+	            			logger.info("Succeeded Group lookup in SAPUME for " + identity);
+	                		logger.debug("SAPUMEGroupBean information: " + groupBean.getBeanInPrintedFormat());
+	                		
+	                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                		logger.info("LookupResponseWriter obtained. Group will be added in response object...");
+	            			responseWriter.writeGroup(groupBean);
+	            			logger.info("Group was written in response");
+	            			
+	                		logger.info("Define a SUCCESS Response Status");
+	                		response.setStatus(StatusCodeType.SUCCESS);
+	                		
+	                		logger.info("Succeeded execution of lookup() method");
+	                		
+	            		} else {
+	            			// No lo encontramos en SAPUME
+	            			String msgError = "Group '" + identity + "' does not found in SAPUME repository";
+	            			logger.error(msgError);
+	            			this.handleError(response, msgError);
+	            		}
+	            		
+	        		} else if (sapumeGroupType != null && sapumeGroupType.equals(SAPUMEGroupTypes.ROLE)) {
+	        		
+	        			logger.info("Entity target is a Role");
+	        			logger.info("SAPUMEContext operation will be invoked: lookupRole()");
+	        			SAPUMERoleBean roleBean = this.sapumeCtx.lookupRole(identity);
+	            		if (roleBean != null)
+	            		{
+	            			logger.info("Succeeded Role lookup in SAPUME for " + identity);
+	                		logger.debug("SAPUMERoleBean information: " + roleBean.getBeanInPrintedFormat());
+	                		
+	                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                		logger.info("LookupResponseWriter obtained. Role will be added in response object...");
+	            			responseWriter.writeRole(roleBean);
+	            			logger.info("Role was written in response");
+	            			
+	                		logger.info("Define a SUCCESS Response Status");
+	                		response.setStatus(StatusCodeType.SUCCESS);
+	                		
+	                		logger.info("Succeeded execution of lookup() method");
+	        			
+	            		} else {
+	            			// No lo encontramos en SAPUME
+	            			String msgError = "Role '" + identity + "' does not found in SAPUME repository";
+	            			logger.error(msgError);
+	            			this.handleError(response, msgError);
+	            		}
+	            		
+	        		} else {
+	        			
+	        			// Si no conseguimos diferenciar si el lookup hay que hacerlo de un GROUP o un ROLE, se buscará primero
+	    				// como Group y si no se encuentra se buscará como Role
+	        			
+	        			// Primero intentamos buscar el objeto como grupo de SAPUME....
+	            		logger.info("First try to lookup entity as a Group in SAPUME...");
+	            		logger.info("SAPUMEContext operation will be invoked: lookupGroup()");
+	        			SAPUMEGroupBean groupBean = this.sapumeCtx.lookupGroup(identity);
+	            		if (groupBean != null)
+	            		{
+	            			logger.info("Succeeded Group lookup in SAPUME for " + identity);
+	                		logger.debug("SAPUMEGroupBean information: " + groupBean.getBeanInPrintedFormat());
+	                		
+	                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                		logger.info("LookupResponseWriter obtained. Group will be added in response object...");
+	            			responseWriter.writeGroup(groupBean);
+	            			logger.info("Group was written in response");
+	            			
+	                		logger.info("Define a SUCCESS Response Status");
+	                		response.setStatus(StatusCodeType.SUCCESS);
+	                		
+	                		logger.info("Succeeded execution of lookup() method");
+	                		
+	            		} else {
+	            			
+	            			// Si no lo encontramos como grupo, lo buscamos como Rol de SAPUME....
+	            			logger.info("Entity not found in SAPUME as a Group --> Try to lookup entity as a Role in SAPUME...");
+	            			logger.info("SAPUMEContext operation will be invoked: lookupRole()");
+	            			SAPUMERoleBean roleBean = this.sapumeCtx.lookupRole(identity);
+	                		if (roleBean != null)
+	                		{
+	                			logger.info("Succeeded Role lookup in SAPUME for " + identity);
+	                    		logger.debug("SAPUMERoleBean information: " + roleBean.getBeanInPrintedFormat());
+	                    		
+	                    		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                    		logger.info("LookupResponseWriter obtained. Role will be added in response object...");
+	                			responseWriter.writeRole(roleBean);
+	                			logger.info("Role was written in response");
+	                			
+	                    		logger.info("Define a SUCCESS Response Status");
+	                    		response.setStatus(StatusCodeType.SUCCESS);
+	                    		
+	                    		logger.info("Succeeded execution of lookup() method");
+	                    		
+	                		} else {
+	                			// No lo encontramos ni como Grupo ni como Rol
+	                			String msgError = "Entity '" + identity + "' not found in SAPUME repository as a Group or as a Role";
+	                			logger.error(msgError);
+	                			this.handleError(response, msgError);
+	                		}
+	            		}
+	        			
+	        		}
+	        		        		
+	    		} else {
+	    			logger.error("ProvisionObjectType (" + provObjType + ") not supported");
+	    			throw new SAPUMEConnectorException("ProvisionObjectType (" + provObjType + ") not supported");
+	    		}
+	    		
+	    	} catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "lookup");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "lookup");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END lookup() operation ---------------");
+	    	}
+	    	
+	    	return response;
+		}
     }
     
     
@@ -550,45 +638,52 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public LookupAttributeResponse lookupAttributeNames(LookupRequest request)
     {
-    	LookupAttributeResponse response = new LookupAttributeResponse();
-    	try
-    	{    		
-    		logger.info("--------------- START lookupAttributeNames() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		
-        	List<ExtensibleAttribute> extensibleAttributeList = this.sapumeCtx.lookupAttributeNames();
-        	if (extensibleAttributeList != null && extensibleAttributeList.size() > 0)
-        	{
-        		logger.info("Succeeded lookup attribute names for SAP target system, so will be added to response");
-    	        response.setAttributes(extensibleAttributeList);
-            	      	
-            	logger.info("Define a SUCCESS Response Status");
-            	response.setStatus(StatusCodeType.SUCCESS);
-            	logger.info("Succeeded execution of lookupAttributeNames() method");
-        		
-        	} else {
-        		String msgError = "Not obtain any attribute name for SAP target system";
-        		logger.error(msgError);
-        		this.handleError(response, msgError);
-        	}
-        	        	
-    	} catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "lookupAttributeNames");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "lookupAttributeNames");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END lookupAttributeNames() operation ---------------");
-    	}
-    	return response;
+    	synchronized (lock)
+		{
+	    	LookupAttributeResponse response = new LookupAttributeResponse();
+	    	try
+	    	{    		
+	    		logger.info("--------------- START lookupAttributeNames() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	String strExecutionMode = request.getExecutionMode();
+	        	logger.info("Request ExecutionMode: " + strExecutionMode);
+	        	ExecutionModeTypes executionMode = ExecutionModeTypes.getExecutionModeTypeFromString(strExecutionMode);
+	        	logger.info("ExecutionModeTypes enum value obtained: " + executionMode.toString());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		
+	        	List<ExtensibleAttribute> extensibleAttributeList = this.sapumeCtx.lookupAttributeNames(executionMode);
+	        	if (extensibleAttributeList != null && extensibleAttributeList.size() > 0)
+	        	{
+	        		logger.info("Succeeded lookup attribute names for SAP target system, so will be added to response");
+	    	        response.setAttributes(extensibleAttributeList);
+	            	      	
+	            	logger.info("Define a SUCCESS Response Status");
+	            	response.setStatus(StatusCodeType.SUCCESS);
+	            	logger.info("Succeeded execution of lookupAttributeNames() method");
+	        		
+	        	} else {
+	        		String msgError = "Not obtain any attribute name for SAP target system";
+	        		logger.error(msgError);
+	        		this.handleError(response, msgError);
+	        	}
+	        	        	
+	    	} catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "lookupAttributeNames");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "lookupAttributeNames");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END lookupAttributeNames() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
     
 	
@@ -597,145 +692,148 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public SearchResponse2 search(SearchRequest request)
     {
-    	SearchResponse2 response = new SearchResponse2();
-    	try
-    	{
-    		logger.info("--------------- START search() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		
-    		String searchQuery = request.getSearchQuery();
-    		logger.info("Request SearchQuery is: " + searchQuery);
-    		
-    		logger.info("SAPContext operation will be invoked: search()");
-    		 
-    		ProvisionObjectType provObjType = request.getExtensibleObject().getExtensibleObjectType();
-    		logger.info("ProvisionObjectType: " + provObjType);
-    		
-    		if(ProvisionObjectType.USER == provObjType)
-    		{
-    			List<ProvisionSAPUMEUserBean> listProvSapumeUsers = this.sapumeCtx.searchUsers(searchQuery);
-        		if (listProvSapumeUsers != null && listProvSapumeUsers.size() > 0)
-        		{
-        			logger.info("Succeeded users search in SAPUME. " + listProvSapumeUsers.size() + " ProvisionSAPUMEUserBean were obtained");
-            		if (logger.isDebugEnabled())
-            		{
-                		for (ProvisionSAPUMEUserBean provSapUser : listProvSapumeUsers)
-                		{
-                			logger.debug("ProvisionSAPUMEUserBean information: " + provSapUser.getBeanInPrintedFormat());
-    					}
-            		}
-            		
-            		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-            		logger.info("LookupResponseWriter obtained. Users will be added in response object...");
-        			responseWriter.writeUsers(listProvSapumeUsers);
-        			logger.info("Users were written in response");
-        			
-            		logger.info("Define a SUCCESS Response Status");
-            		response.setStatus(StatusCodeType.SUCCESS);
-            		
-            		logger.info("Succeeded execution of search() method");
-            		
-        		} else {
-        			String msgError = "SearchQuery " + searchQuery + " get not results in SAPUME repository";
-        			this.handleError(response, msgError);
-        		}
-    			
-    		} else if(ProvisionObjectType.GROUP == provObjType) {
-    			
-    			// Parseamos el filto que llega y formamos el GroupFilterBean
-    			GroupFilterBean filterBean = new GroupFilterBean();
-    			filterBean.fillObjectFromidmFilterExpression(searchQuery);
-    			logger.info("GroupFilterBean instance filled from IDM searchQuery expression");
-    			    			
-    			// Determinamos si es GROUP o ROLE
-    			SAPUMEGroupTypes groupType = filterBean.getGroupType();
-    			logger.info("groupType: " + groupType);
-    			if (groupType.equals(SAPUMEGroupTypes.GROUP))
-    			{
-    				List<SAPUMEGroupBean> listGroups = this.sapumeCtx.searchGroups(filterBean.getFilter());
-            		if (listGroups != null && listGroups.size() > 0)
-            		{
-            			logger.info("Succeeded Groups search in SAPUME. " + listGroups.size() + " SAPUMEGroupBean were obtained");
-                		if (logger.isDebugEnabled())
-                		{
-                    		for (SAPUMEGroupBean group : listGroups)
-                    		{
-                    			logger.debug("SAPUMEGroupBean information: " + group.getBeanInPrintedFormat());
-        					}
-                		}
-                		
-                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-                		logger.info("LookupResponseWriter obtained. Groups will be added in response object...");
-            			responseWriter.writeGroups(listGroups);
-            			logger.info("Groups were written in response");
-            			
-                		logger.info("Define a SUCCESS Response Status");
-                		response.setStatus(StatusCodeType.SUCCESS);
-                		
-                		logger.info("Succeeded execution of search() method");
-                		
-            		} else {
-            			String msgError = "SearchQuery " + searchQuery + " for groups get not results in SAPUME repository";
-            			this.handleError(response, msgError);
-            		}
-    				
-    			} else if (groupType.equals(SAPUMEGroupTypes.ROLE)) {
-    			
-    				List<SAPUMERoleBean> listRoles = this.sapumeCtx.searchRoles(filterBean.getFilter());
-            		if (listRoles != null && listRoles.size() > 0)
-            		{
-            			logger.info("Succeeded Roles search in SAPUME. " + listRoles.size() + " SAPUMERoleBean were obtained");
-                		if (logger.isDebugEnabled())
-                		{
-                    		for (SAPUMERoleBean role : listRoles)
-                    		{
-                    			logger.debug("SAPUMERoleBean information: " + role.getBeanInPrintedFormat());
-        					}
-                		}
-                		
-                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
-                		logger.info("LookupResponseWriter obtained. Roles will be added in response object...");
-            			responseWriter.writeRoles(listRoles);
-            			logger.info("Roles were written in response");
-            			
-                		logger.info("Define a SUCCESS Response Status");
-                		response.setStatus(StatusCodeType.SUCCESS);
-                		
-                		logger.info("Succeeded execution of search() method");
-                		
-            		} else {
-            			String msgError = "SearchQuery " + searchQuery + " for roles get not results in SAPUME repository";
-            			this.handleError(response, msgError);
-            		}
-    				
-    			} else {
-        			logger.error("Group type (" + groupType + ") not supported");
-        			throw new SAPUMEConnectorException("Group type (" + groupType + ") not supported");
-        		} 
-    			    			
-    		} else {
-    			logger.error("ProvisionObjectType (" + provObjType + ") not supported");
-    			throw new SAPUMEConnectorException("ProvisionObjectType (" + provObjType + ") not supported");
-    		}
-    		
-    	} catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "search");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "search");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END search() operation ---------------");
-    	}
-    	
-    	return response;
+    	synchronized (lock)
+		{
+	    	SearchResponse2 response = new SearchResponse2();
+	    	try
+	    	{
+	    		logger.info("--------------- START search() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		
+	    		String searchQuery = request.getSearchQuery();
+	    		logger.info("Request SearchQuery is: " + searchQuery);
+	    		
+	    		logger.info("SAPUMEContext operation will be invoked: search()");
+	    		 
+	    		ProvisionObjectType provObjType = request.getExtensibleObject().getExtensibleObjectType();
+	    		logger.info("ProvisionObjectType: " + provObjType);
+	    		
+	    		if(ProvisionObjectType.USER == provObjType)
+	    		{
+	    			List<ProvisionSAPUMEUserBean> listProvSapumeUsers = this.sapumeCtx.searchUsers(searchQuery);
+	        		if (listProvSapumeUsers != null && listProvSapumeUsers.size() > 0)
+	        		{
+	        			logger.info("Succeeded users search in SAPUME. " + listProvSapumeUsers.size() + " ProvisionSAPUMEUserBean were obtained");
+	            		if (logger.isDebugEnabled())
+	            		{
+	                		for (ProvisionSAPUMEUserBean provSapUser : listProvSapumeUsers)
+	                		{
+	                			logger.debug("ProvisionSAPUMEUserBean information: " + provSapUser.getBeanInPrintedFormat());
+	    					}
+	            		}
+	            		
+	            		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	            		logger.info("LookupResponseWriter obtained. Users will be added in response object...");
+	        			responseWriter.writeUsers(listProvSapumeUsers);
+	        			logger.info("Users were written in response");
+	        			
+	            		logger.info("Define a SUCCESS Response Status");
+	            		response.setStatus(StatusCodeType.SUCCESS);
+	            		
+	            		logger.info("Succeeded execution of search() method");
+	            		
+	        		} else {
+	        			String msgError = "SearchQuery " + searchQuery + " get not results in SAPUME repository";
+	        			this.handleError(response, msgError);
+	        		}
+	    			
+	    		} else if(ProvisionObjectType.GROUP == provObjType) {
+	    			
+	    			// Parseamos el filto que llega y formamos el GroupFilterBean
+	    			GroupFilterBean filterBean = new GroupFilterBean();
+	    			filterBean.fillObjectFromidmFilterExpression(searchQuery);
+	    			logger.info("GroupFilterBean instance filled from IDM searchQuery expression");
+	    			    			
+	    			// Determinamos si es GROUP o ROLE
+	    			SAPUMEGroupTypes groupType = filterBean.getGroupType();
+	    			logger.info("groupType: " + groupType);
+	    			if (groupType.equals(SAPUMEGroupTypes.GROUP))
+	    			{
+	    				List<SAPUMEGroupBean> listGroups = this.sapumeCtx.searchGroups(filterBean.getFilter());
+	            		if (listGroups != null && listGroups.size() > 0)
+	            		{
+	            			logger.info("Succeeded Groups search in SAPUME. " + listGroups.size() + " SAPUMEGroupBean were obtained");
+	                		if (logger.isDebugEnabled())
+	                		{
+	                    		for (SAPUMEGroupBean group : listGroups)
+	                    		{
+	                    			logger.debug("SAPUMEGroupBean information: " + group.getBeanInPrintedFormat());
+	        					}
+	                		}
+	                		
+	                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                		logger.info("LookupResponseWriter obtained. Groups will be added in response object...");
+	            			responseWriter.writeGroups(listGroups);
+	            			logger.info("Groups were written in response");
+	            			
+	                		logger.info("Define a SUCCESS Response Status");
+	                		response.setStatus(StatusCodeType.SUCCESS);
+	                		
+	                		logger.info("Succeeded execution of search() method");
+	                		
+	            		} else {
+	            			String msgError = "SearchQuery " + searchQuery + " for groups get not results in SAPUME repository";
+	            			this.handleError(response, msgError);
+	            		}
+	    				
+	    			} else if (groupType.equals(SAPUMEGroupTypes.ROLE)) {
+	    			
+	    				List<SAPUMERoleBean> listRoles = this.sapumeCtx.searchRoles(filterBean.getFilter());
+	            		if (listRoles != null && listRoles.size() > 0)
+	            		{
+	            			logger.info("Succeeded Roles search in SAPUME. " + listRoles.size() + " SAPUMERoleBean were obtained");
+	                		if (logger.isDebugEnabled())
+	                		{
+	                    		for (SAPUMERoleBean role : listRoles)
+	                    		{
+	                    			logger.debug("SAPUMERoleBean information: " + role.getBeanInPrintedFormat());
+	        					}
+	                		}
+	                		
+	                		LookupResponseWriter responseWriter = new LookupResponseWriter(response);
+	                		logger.info("LookupResponseWriter obtained. Roles will be added in response object...");
+	            			responseWriter.writeRoles(listRoles);
+	            			logger.info("Roles were written in response");
+	            			
+	                		logger.info("Define a SUCCESS Response Status");
+	                		response.setStatus(StatusCodeType.SUCCESS);
+	                		
+	                		logger.info("Succeeded execution of search() method");
+	                		
+	            		} else {
+	            			String msgError = "SearchQuery " + searchQuery + " for roles get not results in SAPUME repository";
+	            			this.handleError(response, msgError);
+	            		}
+	    				
+	    			} else {
+	        			logger.error("Group type (" + groupType + ") not supported");
+	        			throw new SAPUMEConnectorException("Group type (" + groupType + ") not supported");
+	        		} 
+	    			    			
+	    		} else {
+	    			logger.error("ProvisionObjectType (" + provObjType + ") not supported");
+	    			throw new SAPUMEConnectorException("ProvisionObjectType (" + provObjType + ") not supported");
+	    		}
+	    		
+	    	} catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "search");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "search");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END search() operation ---------------");
+	    	}
+	    	
+	    	return response;
+		}
     }
     
     
@@ -756,38 +854,41 @@ public class SAPUMEConnectorServiceImpl implements SAPUMEConnectorService
      */
     public BaseResponseType testConnection(BaseRequestType request)
     {
-    	ObjectResponse response = new ObjectResponse(); 
-    	try
-    	{
-    		logger.info("--------------- START testConnection() operation ---------------");
-    		
-    		logger.info("RequestID: " + request.getRequestID());
-        	response.setRequestID(request.getRequestID());
-        	
-        	logger.info("Initialize class objects...");
-    		initialize(request);
-    		
-    		logger.info("SAPUMEContext operation will be invoked: testConnection()");
-    		this.sapumeCtx.testConnection();
-    		System.out.println("Succeeded testing Connection for SAPUME target system");
-    		    		
-    		logger.info("Define a SUCCESS Response Status");
-    		response.setStatus(StatusCodeType.SUCCESS);
-    		
-    		logger.info("Succeeded execution of testConnection() method");
-    		
-    	} catch (SAPUMEConnectorException e) {
-    		this.handleException(response, e, "testConnection");
-    		
-    	} catch (Exception e) {
-    		this.handleException(response, e, "testConnection");
-    		
-    	} finally {
-    		this.sapumeCtx.dispose();
-    		logger.info("Response Status: " + response.getStatus());
-    		logger.info("--------------- END testConnection() operation ---------------");
-    	}
-    	return response;
+    	synchronized (lock)
+		{
+	    	ObjectResponse response = new ObjectResponse(); 
+	    	try
+	    	{
+	    		logger.info("--------------- START testConnection() operation ---------------");
+	    		
+	    		logger.info("RequestID: " + request.getRequestID());
+	        	response.setRequestID(request.getRequestID());
+	        	
+	        	logger.info("Initialize class objects...");
+	    		initialize(request);
+	    		
+	    		logger.info("SAPUMEContext operation will be invoked: testConnection()");
+	    		this.sapumeCtx.testConnection();
+	    		System.out.println("Succeeded testing Connection for SAPUME target system");
+	    		    		
+	    		logger.info("Define a SUCCESS Response Status");
+	    		response.setStatus(StatusCodeType.SUCCESS);
+	    		
+	    		logger.info("Succeeded execution of testConnection() method");
+	    		
+	    	} catch (SAPUMEConnectorException e) {
+	    		this.handleException(response, e, "testConnection");
+	    		
+	    	} catch (Exception e) {
+	    		this.handleException(response, e, "testConnection");
+	    		
+	    	} finally {
+	    		this.sapumeCtx.dispose();
+	    		logger.info("Response Status: " + response.getStatus());
+	    		logger.info("--------------- END testConnection() operation ---------------");
+	    	}
+	    	return response;
+		}
     }
 
     

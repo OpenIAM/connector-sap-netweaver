@@ -60,6 +60,8 @@ public class ProvisionSAPUMEUserBean
     private boolean flagEnable = false;
     private boolean flagMngRoles = false;
     private boolean flagMngGroups = false;
+    // Flags que identifica si el cambio de contraseña a realizar es administrativo o no
+    private boolean administrativePwdChange = false;
     
     
     /**********************************************************
@@ -394,6 +396,20 @@ public class ProvisionSAPUMEUserBean
 	 */
 	public void setFlagMngGroups(boolean flagMngGroups) {
 		this.flagMngGroups = flagMngGroups;
+	}
+
+	/**
+	 * @return the administrativePwdChange
+	 */
+	public boolean isAdministrativePwdChange() {
+		return administrativePwdChange;
+	}
+
+	/**
+	 * @param administrativePwdChange the administrativePwdChange to set
+	 */
+	public void setAdministrativePwdChange(boolean administrativePwdChange) {
+		this.administrativePwdChange = administrativePwdChange;
 	}
 
 	/**

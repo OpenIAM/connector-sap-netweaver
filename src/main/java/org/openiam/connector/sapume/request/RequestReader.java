@@ -12,6 +12,7 @@ import org.openiam.connector.sapume.core.beans.ProvisionSAPUMEUserBean;
 import org.openiam.connector.sapume.core.beans.SAPUMEGroupBean;
 import org.openiam.connector.sapume.core.beans.SAPUMERoleBean;
 import org.openiam.connector.sapume.core.beans.SAPUMESystemBean;
+import org.openiam.connector.sapume.core.common.ChangePasswordTypes;
 import org.openiam.connector.sapume.core.common.SAPUMEConnectorException;
 import org.openiam.connector.sapume.core.common.SAPUMEConstants;
 import org.openiam.connector.sapume.core.common.SAPUMEUtil;
@@ -149,23 +150,7 @@ public class RequestReader<E extends BaseRequestType>
 				}
 			}			
 			
-			ProvisionSAPUMEUserBean provSapUser = new ProvisionSAPUMEUserBean(this.userID);
-/* TODO
-			if (attributesMap.containsKey(SAPConstants.SAP_FIELD_OLD_IDENTITY) && attributesMap.get(SAPConstants.SAP_FIELD_OLD_IDENTITY) != null
-				&& !attributesMap.get(SAPConstants.SAP_FIELD_OLD_IDENTITY).toString().equals(""))
-			{
-				String oldIdentityValue = attributesMap.get(SAPConstants.SAP_FIELD_OLD_IDENTITY).toString();
-				logger.debug(SAPConstants.SAP_FIELD_OLD_IDENTITY + " detected: " + oldIdentityValue);
-				provSapUser.setOldUserID(oldIdentityValue);
-				provSapUser.setFlagRename(true);
-				logger.debug("Rename flag was activated in ProvisionSAPUMEUserBean object");
-				attributesMap.remove(SAPConstants.SAP_FIELD_OLD_IDENTITY);
-				logger.debug("Attribute " + SAPConstants.SAP_FIELD_OLD_IDENTITY + " was removed from map, its already processed and flags activated");
-				
-				this.userID = oldIdentityValue;
-				logger.debug("Re-defined userID variable class with value: " + this.userID);
-			}
-*/			
+			ProvisionSAPUMEUserBean provSapUser = new ProvisionSAPUMEUserBean(this.userID);	
 
 			if (attributesMap.containsKey(SAPUMEConstants.SAPUME_FIELD_ASSIGNEDGROUPS))
 			{
@@ -254,7 +239,7 @@ public class RequestReader<E extends BaseRequestType>
 	}
 	
 	
-	public ProvisionSAPUMEUserBean createProvisionUserForResetPasswordOperation() throws SAPUMEConnectorException
+	public ProvisionSAPUMEUserBean createProvisionUserForResetPasswordOperation(ChangePasswordTypes changePwdType) throws SAPUMEConnectorException
 	{
 		try
 		{
@@ -268,6 +253,15 @@ public class RequestReader<E extends BaseRequestType>
 			
 			provUser.addNewAttribute(new AttributeBean(SAPUMEConstants.SAPUME_FIELD_PASSWORD, securedStr));
 			logger.debug("Field " + SAPUMEConstants.SAPUME_FIELD_PASSWORD + " with the password to set was added in ProvisionSAPUMEUserBean object");
+			
+			// Marcamos para detectar que es un cambio de contraseña administrativo (es un ResetPassword y no un SetPassword)
+			if (changePwdType.toString().equals(ChangePasswordTypes.RESET_PASSWORD.toString())) {
+				provUser.setAdministrativePwdChange(true);
+				logger.info("Administrative Pasword change flag was activated in ProvisionSAPUMEUserBean object");
+			} else {
+				provUser.setAdministrativePwdChange(false);
+				logger.info("Administrative Pasword change flag was deactivated in ProvisionSAPUMEUserBean object");
+			}
 			
 			logger.debug("ProvisionSAPUMEUserBean instance created");
 			return provUser;

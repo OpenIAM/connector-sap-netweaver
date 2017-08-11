@@ -29,6 +29,8 @@ public class SAPUMEConfiguration
 	private String enableAccountsDate;
 	private boolean traceSPMLRequest;
 	private String[] policyMapAttList;
+	private String[] managedSystemAttList;
+	private boolean modifyDatesForEnableDisable;
 	private List<String> reconSearchUsersAttList;
 		
 	
@@ -64,6 +66,8 @@ public class SAPUMEConfiguration
 			this.enableAccountsDate = Config.get(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_ENABLEACCOUNTS_DATE);
 			this.traceSPMLRequest = (Config.get(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_TRACESPMLREQUEST).equalsIgnoreCase("True")) ? true : false;
 			this.policyMapAttList = Config.getAsArray(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_POLICYMAP_ATTS);
+			this.managedSystemAttList = Config.getAsArray(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_MANAGEDSYS_ATTS);
+			this.modifyDatesForEnableDisable = (Config.get(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_MODIFYDATES_FOR_ENABLEDISABLE).equalsIgnoreCase("True")) ? true : false;
 			this.reconSearchUsersAttList = Config.getAsList(ConfigPropertiesKeys.CONFIG_KEY_SAPUME_RECON_SEARCH_USERS_ATTS);
 			
 		} catch (Exception e) {
@@ -198,6 +202,19 @@ public class SAPUMEConfiguration
 	public void setPolicyMapAttList(String[] policyMapAttList) {
 		this.policyMapAttList = policyMapAttList;
 	}
+	
+	/**
+	 * @return the managedSystemAttList
+	 */
+	public String[] getManagedSystemAttList() {
+		return managedSystemAttList;
+	}
+	/**
+	 * @param managedSystemAttList the managedSystemAttList to set
+	 */
+	public void setManagedSystemAttList(String[] managedSystemAttList) {
+		this.managedSystemAttList = managedSystemAttList;
+	}
 	/**
 	 * @return the reconSearchUsersAttList
 	 */
@@ -222,6 +239,20 @@ public class SAPUMEConfiguration
 	 */
 	public void setEnableAccountsDate(String enableAccountsDate) {
 		this.enableAccountsDate = enableAccountsDate;
+	}
+
+	/**
+	 * @return the modifyDatesForEnableDisable
+	 */
+	public boolean isModifyDatesForEnableDisable() {
+		return modifyDatesForEnableDisable;
+	}
+
+	/**
+	 * @param modifyDatesForEnableDisable the modifyDatesForEnableDisable to set
+	 */
+	public void setModifyDatesForEnableDisable(boolean modifyDatesForEnableDisable) {
+		this.modifyDatesForEnableDisable = modifyDatesForEnableDisable;
 	}
 	
 }

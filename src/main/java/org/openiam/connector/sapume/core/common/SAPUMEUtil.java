@@ -174,8 +174,8 @@ public class SAPUMEUtil
 					SearchResult result = listResults.get(0);
 					// Será usuario técnico solo si securitypolicy=technical 
 					isTechnicalUser = (result.getAttribute(SAPUMEConstants.SAPUME_FIELD_SECURITYPOLICY) != null &&
-							result.getAttribute(SAPUMEConstants.SAPUME_FIELD_SECURITYPOLICY).getValue() != null &&
-							result.getAttribute(SAPUMEConstants.SAPUME_FIELD_SECURITYPOLICY).getValue().toString().equals(SAPUMEConstants.SAPUME_USER_SECURITYPOLICY_TECHNICAL)) ? true : false;
+									   result.getAttribute(SAPUMEConstants.SAPUME_FIELD_SECURITYPOLICY).getValue() != null &&
+									   result.getAttribute(SAPUMEConstants.SAPUME_FIELD_SECURITYPOLICY).getValue().toString().equals(SAPUMEConstants.SAPUME_USER_SECURITYPOLICY_TECHNICAL)) ? true : false;
 					
 					if (isTechnicalUser )
 						logger.info("User is Technical");
@@ -203,20 +203,46 @@ public class SAPUMEUtil
 	}
 	
 	
-	public static void updateModifyRequestForDisableUser(ModifyRequest spmlModifyRequest, SAPUMEConfiguration config) throws SAPUMEConnectorException
+	@SuppressWarnings("deprecation")
+	public static void updateModifyRequestForDisableUser(String logonname, ModifyRequest spmlModifyRequest, SAPUMEConnection connection, SAPUMEConfiguration config) throws SAPUMEConnectorException
 	{
 		try
 		{
 			logger.info("Start updateModifyRequestForDisableUser() method");
 			
-			// Obtenemos la fecha con la que actualizar el Valid Through para deshabilitar al usuario
-			Date date = DateUtils.getCurrentDateModByDays(false, -1);
+			if (config.isModifyDatesForEnableDisable())
+			{
+				Date dateToDisable = null;
+				// Obtenemos la fecha actual
+				Date dateNow = DateUtils.getCurrentDate(false);
+				logger.debug("dateNow: " + DateUtils.getStrFromDate(dateNow, config.getSapDateMask()));
+				// Obtenemos el valor de la fecha VALID_FROM que el usuario tiene en SAPUME
+				Date validFrom = SAPUMEUtil.getUserValidFrom(logonname, connection, config);
+				logger.debug("validFrom: " + DateUtils.getStrFromDate(validFrom, config.getSapDateMask()));
+				
+				// Detectamos cuando la fecha actual (fecha en la que se va a deshabilitar) es el mismo día que la fecha de inicio que ya tiene en SAPUME
+				if (validFrom != null && 
+					(validFrom.getYear() == dateNow.getYear() && validFrom.getMonth() == dateNow.getMonth() && validFrom.getDay() == dateNow.getDay()))
+				{
+					// Definimos cono fecha de inicio el dia en el que estamos
+					dateToDisable = dateNow;
+					
+				} else {
+					// Obtenemos la fecha con la que actualizar el Valid Through para deshabilitar al usuario (FECHA_ACTUAL - 1)
+					dateToDisable = DateUtils.getCurrentDateModByDays(false, -1);
+				}
+				
+				// Obtenemos el valor del atributo con el formato de fecha esperado por SAP			
+				String strDateValue = DateUtils.getStrFromDate(dateToDisable, SAPUMEUtil.SAPUME_DATE_MASK);
+				logger.info("In order to disable user, ValidTo field will be updated with value: " + strDateValue);
+				spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_VALIDTO, strDateValue);
+				
+			} else {
+				logger.info("ModifyDatesForEnableDisable flag is disabled, so no VALID_TO modification is required");
+			}
 			
-			// Obtenemos el valor del atributo con el formato de fecha esperado por SAP			
-			String strDateValue = DateUtils.getStrFromDate(date, SAPUMEUtil.SAPUME_DATE_MASK);
-			logger.info("In order to disable user, Valid Through field will be updated with value: " + strDateValue);
-			
-			spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_VALIDTO, strDateValue);
+			logger.info("Disable user operation also required lock user");
+			spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_ISLOCKED, SAPUMEConstants.SAPUME_VALUE_USERLOCK_YES);
 			
 			logger.debug("ModifyRequest was sucess update");
 			
@@ -233,14 +259,22 @@ public class SAPUMEUtil
 		{
 			logger.info("Start updateModifyRequestForEnableUser() method");
 			
-			// Obtenemos la fecha con la que actualizar el Valid Through para activar al usuario
-			Date date = DateUtils.getDateFromStr(config.getEnableAccountsDate(), config.getSapDateMask());
+			if (config.isModifyDatesForEnableDisable())
+			{
+				// Obtenemos la fecha con la que actualizar el Valid Through para activar al usuario
+				Date date = DateUtils.getDateFromStr(config.getEnableAccountsDate(), config.getSapDateMask());
+				
+				// Obtenemos el valor del atributo con el formato de fecha esperado por SAP			
+				String strDateValue = DateUtils.getStrFromDate(date, SAPUMEUtil.SAPUME_DATE_MASK);
+				logger.info("In order to enable user, ValidTo field will be updated with value: " + strDateValue);
+				spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_VALIDTO, strDateValue);
+				
+			} else {
+				logger.info("ModifyDatesForEnableDisable flag is disabled, so no VALID_TO modification is required");
+			}
 			
-			// Obtenemos el valor del atributo con el formato de fecha esperado por SAP			
-			String strDateValue = DateUtils.getStrFromDate(date, SAPUMEUtil.SAPUME_DATE_MASK);
-			logger.info("In order to enable user, Valid Through field will be updated with value: " + strDateValue);
-			
-			spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_VALIDTO, strDateValue);
+			logger.info("Enable user operation also required unlock user");
+			spmlModifyRequest.addModification(SAPUMEConstants.SAPUME_FIELD_ISLOCKED, SAPUMEConstants.SAPUME_VALUE_USERLOCK_NO);
 			
 			logger.debug("ModifyRequest was sucess update");
 			
@@ -456,7 +490,7 @@ public class SAPUMEUtil
 		} catch (SAPUMEConnectorException e) {
 			throw e;
 			
-		}  catch (Exception e) {
+		} catch (Exception e) {
 			logger.error("Generic error trying to get user details in SAPUME: " + e.getMessage(), e);
 			throw new SAPUMEConnectorException("Generic error trying to get user details in SAPUME: " + e.getMessage(), e);
 		}
@@ -464,6 +498,68 @@ public class SAPUMEUtil
 		return provisionSAPUMEUserBean;
 	}
 	
+	public static Date getUserValidFrom(String logonname, SAPUMEConnection connection, SAPUMEConfiguration config) throws SAPUMEConnectorException
+	{
+		Date validFrom = null;
+		try
+		{
+			logger.info("Start getUserValidFrom() method");
+			
+			logger.info("User to search: " + logonname);
+			SearchRequest spmlSearchReq = new SearchRequest();
+			
+			// Definimos tipo objetos a buscar
+			spmlSearchReq.setSearchBase(SAPUMEConstants.SAPUME_TARGETOBJCLASS_USER);
+			// Construimos el filtro de búsqueda para buscar a un usuario concreto
+			Filter filter = SAPUMEFilterGenerator.buildSPMLFiltertoMatchUserByLogonName(logonname); 
+			spmlSearchReq.setFilter(filter);
+			// Definimos el atributo a recuperar del usuario
+			spmlSearchReq.addAttribute(SAPUMEConstants.SAPUME_FIELD_VALIDFROM);
+			
+			logger.info("SPML request will be send to SAPUME...");
+			SpmlResponse spmlResponse = connection.sendSPMLRequest(spmlSearchReq, config.isTraceSPMLRequest());
+			logger.info("SPML response received from SAPUME");
+			
+			List<SearchResult> listResults = ((SearchResponse)spmlResponse).getResults();
+			if (listResults != null && listResults.size() > 0)
+			{
+				if (listResults.size() == 1)
+				{
+					logger.info("User " + logonname + " exists in SAPUME repository");
+					SearchResult searchResult = listResults.get(0);
+					if (searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_VALIDFROM) != null)
+					{
+						Object fieldValue = searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_VALIDFROM).getValue();
+						logger.debug("Value of '" + SAPUMEConstants.SAPUME_FIELD_VALIDFROM + "' field its: " + fieldValue);
+						if (fieldValue != null)
+						{
+							// Obtenemos el valor de la fecha en formato esperado por OpenIAM a partir del valor de fecha devuelto por SAPUME
+							fieldValue = DateUtils.changeDateMask(fieldValue.toString(), SAPUMEUtil.SAPUME_DATE_MASK, config.getSapDateMask());
+							logger.debug("ValidFrom value with SAPUME Date Mask: " + fieldValue);
+							validFrom = DateUtils.getDateFromStr((String)fieldValue, config.getSapDateMask());
+						}
+					}
+
+				} else {
+					logger.error("Found more than one account for user ID specified");
+					throw new SAPUMEConnectorException("Found more than one account for user ID specified");
+				}
+				
+			} else {
+				logger.info("User " + logonname + " cannot be found in SAPUME repository");
+				throw new SAPUMEConnectorException("User " + logonname + " cannot be found in SAPUME repository");
+			}
+
+		} catch (SAPUMEConnectorException e) {
+			throw e;
+			
+		} catch (Exception e) {
+			logger.error("Generic error trying to get ValidFrom date for user in SAPUME: " + e.getMessage(), e);
+			throw new SAPUMEConnectorException("Generic error trying to get ValidFrom date for user in SAPUME: " + e.getMessage(), e);
+		}
+		
+		return validFrom;
+	}
 	
 	public static List<SAPUMEGroupBean> getUserGroups(String logonname, SAPUMEConnection connection, SAPUMEConfiguration config) throws SAPUMEConnectorException
 	{
@@ -490,10 +586,10 @@ public class SAPUMEUtil
 				logger.info("The user has not any Group in SAPUME");				
 			}
 		
-		}  catch (SAPUMEConnectorException e) {
+		} catch (SAPUMEConnectorException e) {
 			throw e;
 			
-		}  catch (Exception e) {
+		} catch (Exception e) {
 			logger.error("Generic error trying to get Groups assigned to a user in SAPUME: " + e.getMessage(), e);
 			throw new SAPUMEConnectorException("Generic error trying to get Groups assigned to a user in SAPUME: " + e.getMessage(), e);
 		}
@@ -613,13 +709,9 @@ public class SAPUMEUtil
 			Filter filter = SAPUMEFilterGenerator.buildSPMLFiltertoMatchGroupByUniqueName(groupUniqueName);
 			sapumeGroupBean = SAPUMEUtil.executeSingleGroupSearch(filter, connection, config);
 			if (sapumeGroupBean != null)
-			{
 				logger.info("SAPUMEGroupBean was build successfully");
-				
-			} else {
-				logger.error("Not Group was found in SAPUME repository for filter search defined");
-				throw new SAPUMEConnectorException("Not Group was found in SAPUME repository for filter search defined");
-			}
+			else
+				logger.info("Not Group was found in SAPUME repository for filter search defined");
 			
 		} catch (SAPUMEConnectorException e) {
 			throw e;
@@ -648,8 +740,7 @@ public class SAPUMEUtil
 				logger.info("SAPUMERoleBean was build successfully");
 				
 			} else {
-				logger.error("Not Role was found in SAPUME repository for filter search defined");
-				throw new SAPUMEConnectorException("Not Role was found in SAPUME repository for filter search defined");
+				logger.info("Not Role was found in SAPUME repository for filter search defined");
 			}
 			
 		} catch (SAPUMEConnectorException e) {
@@ -759,35 +850,50 @@ public class SAPUMEUtil
 	}
 	
 	
-	public static List<ExtensibleAttribute> lookupAttributeNames(SAPUMEConfiguration config) throws SAPUMEConnectorException
+	public static List<ExtensibleAttribute> lookupAttributeNames(SAPUMEConfiguration config, ExecutionModeTypes executionMode) throws SAPUMEConnectorException
 	{
 		List<ExtensibleAttribute> extensibleAttributeList = null;
 		
 		try
 		{
 			logger.info("Start lookupAttributeNames() method");
+			logger.debug("Param executionMode value: " + executionMode);
 			
-			String[] policyMapAttList = config.getPolicyMapAttList();
-			logger.info("policyMapAttList obtained from configuration");
-			if (policyMapAttList != null && policyMapAttList.length > 0)
+			String[] attList = null;
+			switch (executionMode)
 			{
+				case POLICY_MAP:
+					attList = config.getPolicyMapAttList();
+					break;
+
+				case MANAGED_SYSTEM:
+					attList = config.getManagedSystemAttList();
+					break;
+					
+				default:
+					break;
+			}
+			
+			if (attList != null && attList.length > 0)
+			{
+				logger.info("Attributes List obtained from configuration");
 				if (logger.isDebugEnabled())
 				{
 					StringBuffer sb = new StringBuffer();
-					for (String att : policyMapAttList)
+					for (String att : attList)
 					{
 						if (sb.length() > 0)
 							sb.append(",");
 						sb.append(att);
 					}
-					logger.debug("policyMapAttList defined in configuration file --> " + sb.toString());
+					logger.debug("Attributes List obtained from configuration file --> " + sb.toString());
 				}
 				
-				extensibleAttributeList = SAPUMEUtil.buildExtensibleAttributeList(policyMapAttList);
+				extensibleAttributeList = SAPUMEUtil.buildExtensibleAttributeList(attList);
 				logger.info("ExtensibleAttribute list obtained from configuration properties");
 				
 			} else {
-				logger.info("Not obtain any attribute name for SAP target system");
+				logger.info("Not obtain any attribute from configuration for SAP target system");
 			}
 			
 		} catch (SAPUMEConnectorException e) {
@@ -1330,7 +1436,7 @@ public class SAPUMEUtil
 					logger.debug("Group Uniquename obtained: " + groupUniquename);
 					String groupDescription = (listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
 											   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
-													   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : ""; 
+											   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : ""; 
 					sapumeGroupBean = new SAPUMEGroupBean(groupUniquename, groupUniqueID, groupDescription);
 					logger.debug("SAPUMEGroupBean instance created");
 					
@@ -1340,8 +1446,7 @@ public class SAPUMEUtil
 				}
 				
 			} else {
-				logger.error("Not Group was found in SAPUME repository for filter search defined");
-				throw new SAPUMEConnectorException("Not Group was found in SAPUME repository for filter search defined");
+				logger.info("Not Group was found in SAPUME repository for filter search defined");
 			}
 			
 		} catch (SAPUMEConnectorException e) {
@@ -1373,6 +1478,7 @@ public class SAPUMEUtil
 			// Definimos los atributos a recuperar del grupo
 			spmlSearchReq.addAttribute(SAPUMEConstants.SAPUME_FIELD_UNIQUENAME);
 			spmlSearchReq.addAttribute(SAPUMEConstants.SAPUME_FIELD_UNIQUEID);
+			spmlSearchReq.addAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION);
 			
 			logger.debug("SPML request will be send to SAPUME...");
 			SpmlResponse spmlResponse = connection.sendSPMLRequest(spmlSearchReq, config.isTraceSPMLRequest());
@@ -1391,8 +1497,8 @@ public class SAPUMEUtil
 					String roleUniquename = listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_UNIQUENAME).getValue().toString();
 					logger.debug("Role Uniquename obtained: " + roleUniquename);
 					String roleDescription = (listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
-							   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
-									   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : "";
+							   				  listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
+							   				  listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : "";
 					sapumeRoleBean = new SAPUMERoleBean(roleUniquename, roleUniqueID, roleDescription);
 					logger.debug("SAPUMERoleBean instance created");
 					
@@ -1402,8 +1508,7 @@ public class SAPUMEUtil
 				}
 				
 			} else {
-				logger.error("Not Role was found in SAPUME repository for filter search defined");
-				throw new SAPUMEConnectorException("Not Role was found in SAPUME repository for filter search defined");
+				logger.info("Not Role was found in SAPUME repository for filter search defined");
 			}
 			
 		} catch (SAPUMEConnectorException e) {
@@ -1762,9 +1867,10 @@ public class SAPUMEUtil
 					logger.debug("Group UniqueID: " + uid);
 					String uniqueName = searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_UNIQUENAME).getValue().toString();
 					logger.debug("Group UniqueName: " + uniqueName);
-					String description = (listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
-							   				   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
-							   				   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : ""; 
+					String description = (searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
+										  searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
+										  searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : ""; 
+					logger.debug("Group Description: " + description);
 					SAPUMEGroupBean oneGroupBean = new SAPUMEGroupBean(uniqueName, uid, description);
 					logger.debug("SAPUMEGroupBean was build successfully");
 					logger.debug(oneGroupBean.getBeanInPrintedFormat());
@@ -1828,10 +1934,11 @@ public class SAPUMEUtil
 					logger.debug("Role UniqueID: " + uid);
 					String uniqueName = searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_UNIQUENAME).getValue().toString();
 					logger.debug("Role UniqueName: " + uniqueName);
-					String description = (listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
-			   				   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
-			   				   listResults.get(0).getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : "";
-					SAPUMERoleBean oneRoleBean = new SAPUMERoleBean(uniqueName, uid, description);
+					String description = (searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION) != null &&
+										  searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue() != null) ? 
+										  searchResult.getAttribute(SAPUMEConstants.SAPUME_FIELD_DESCRIPTION).getValue().toString() : "";
+			   		logger.debug("Role Description: " + description);
+			   		SAPUMERoleBean oneRoleBean = new SAPUMERoleBean(uniqueName, uid, description);
 					logger.debug("SAPUMERoleBean was build successfully");
 					logger.debug(oneRoleBean.getBeanInPrintedFormat());
 					
