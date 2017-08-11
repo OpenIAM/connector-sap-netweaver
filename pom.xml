@@ -114,12 +114,16 @@
 		  <version>1.0.0</version>
 		  <classifier>toolkit</classifier>
 		</dependency>
+		 
 		<dependency>
             <groupId>javax</groupId>
             <artifactId>javaee</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>D:/Sun/SDK/lib/javaee.jar</systemPath>
+            
+    <scope>provided</scope>
+            <!--scope>system</scope-->
+            <!--systemPath>${basedir}/javaee.jar</systemPath-->
+            <!-- C:\Users\destevez\git\sap-netweaver\javaee.jar</systemPath-->
         </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
