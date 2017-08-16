@@ -59,7 +59,24 @@ import org.openiam.connector.sapume.service.wrapper.SuspendResumeRequest;
     "scriptHandler",
     "operation",
     "extensibleObject",
-    "objectIdentity"
+    "objectIdentity",
+        "objectIdentityAttributeName",
+        "searchScope",
+        "handler5",
+        "driverUrl",
+        "connectionString",
+        "addHandler",
+        "modifyHandler",
+        "deleteHandler",
+        "passwordHandler",
+        "suspendHandler",
+        "resumeHandler",
+        "searchHandler",
+        "lookupHandler",
+        "testConnectionHandler",
+        "reconcileResourceHandler",
+        "attributeNamesHandler",
+        "searchFilter"
 })
 @XmlSeeAlso({
     SuspendResumeRequest.class,
@@ -83,7 +100,27 @@ public class BaseRequestType {
     protected String operation;
     protected ExtensibleObject extensibleObject;
     @XmlElement(required = true)
-    protected String objectIdentity;
+        protected String objectIdentity;
+    protected String objectIdentityAttributeName;
+
+    protected Integer searchScope;
+    protected String handler5;
+
+    protected String driverUrl;
+    protected String connectionString;
+
+    protected String addHandler;
+    protected String modifyHandler;
+    protected String deleteHandler;
+    protected String passwordHandler;
+    protected String suspendHandler;
+    protected String resumeHandler;
+    protected String searchHandler;
+    protected String lookupHandler;
+    protected String testConnectionHandler;
+    protected String reconcileResourceHandler;
+    protected String attributeNamesHandler;
+    protected String searchFilter;
 
     /**
      * Gets the value of the requestID property.
@@ -397,4 +434,139 @@ public class BaseRequestType {
         this.objectIdentity = value;
     }
 
+    public String getObjectIdentityAttributeName() {
+        return objectIdentityAttributeName;
+    }
+
+    public void setObjectIdentityAttributeName(String objectIdentityAttributeName) {
+        this.objectIdentityAttributeName = objectIdentityAttributeName;
+    }
+
+    public Integer getSearchScope() {
+        return searchScope;
+    }
+
+    public void setSearchScope(Integer searchScope) {
+        this.searchScope = searchScope;
+    }
+
+    public String getHandler5() {
+        return handler5;
+    }
+
+    public void setHandler5(String handler5) {
+        this.handler5 = handler5;
+    }
+
+    public String getDriverUrl() {
+        return driverUrl;
+    }
+
+    public void setDriverUrl(String driverUrl) {
+        this.driverUrl = driverUrl;
+    }
+
+    public String getConnectionString() {
+        return connectionString;
+    }
+
+    public void setConnectionString(String connectionString) {
+        this.connectionString = connectionString;
+    }
+
+    public String getAddHandler() {
+        return addHandler;
+    }
+
+    public void setAddHandler(String addHandler) {
+        this.addHandler = addHandler;
+    }
+
+    public String getModifyHandler() {
+        return modifyHandler;
+    }
+
+    public void setModifyHandler(String modifyHandler) {
+        this.modifyHandler = modifyHandler;
+    }
+
+    public String getDeleteHandler() {
+        return deleteHandler;
+    }
+
+    public void setDeleteHandler(String deleteHandler) {
+        this.deleteHandler = deleteHandler;
+    }
+
+    public String getPasswordHandler() {
+        return passwordHandler;
+    }
+
+    public void setPasswordHandler(String passwordHandler) {
+        this.passwordHandler = passwordHandler;
+    }
+
+    public String getSuspendHandler() {
+        return suspendHandler;
+    }
+
+    public void setSuspendHandler(String suspendHandler) {
+        this.suspendHandler = suspendHandler;
+    }
+
+    public String getResumeHandler() {
+        return resumeHandler;
+    }
+
+    public void setResumeHandler(String resumeHandler) {
+        this.resumeHandler = resumeHandler;
+    }
+
+    public String getSearchHandler() {
+        return searchHandler;
+    }
+
+    public void setSearchHandler(String searchHandler) {
+        this.searchHandler = searchHandler;
+    }
+
+    public String getLookupHandler() {
+        return lookupHandler;
+    }
+
+    public void setLookupHandler(String lookupHandler) {
+        this.lookupHandler = lookupHandler;
+    }
+
+    public String getTestConnectionHandler() {
+        return testConnectionHandler;
+    }
+
+    public void setTestConnectionHandler(String testConnectionHandler) {
+        this.testConnectionHandler = testConnectionHandler;
+    }
+
+    public String getReconcileResourceHandler() {
+        return reconcileResourceHandler;
+    }
+
+    public void setReconcileResourceHandler(String reconcileResourceHandler) {
+        this.reconcileResourceHandler = reconcileResourceHandler;
+    }
+
+    public String getAttributeNamesHandler() {
+        return attributeNamesHandler;
+    }
+
+    public void setAttributeNamesHandler(String attributeNamesHandler) {
+        this.attributeNamesHandler = attributeNamesHandler;
+    }
+
+    public String getSearchFilter() {
+        return searchFilter;
+    }
+
+    public void setSearchFilter(String searchFilter) {
+        this.searchFilter = searchFilter;
+    }
 }

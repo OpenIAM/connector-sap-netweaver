@@ -15,7 +15,7 @@
 		<servlet-class>org.openiam.connector.sapume.init.ServletInit</servlet-class>
 		<init-param>
 			<param-name>ConfigFile</param-name>
-			<param-value>D:/EclipseKeplerMaven/workspace/SAPUMEConnector/config/SAPUMEConnectorService.properties</param-value>
+			<param-value>/usr/local/OpenIAM/SAPUMEConnectorService.properties</param-value>
 		</init-param>
 		<load-on-startup>2</load-on-startup>
 	</servlet>
